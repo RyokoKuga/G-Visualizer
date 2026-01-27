@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>G-Visualizer</title>
+    <script type="text/javascript" src="jsmol/JSmol.min.js"></script>
+
+    <script type="text/javascript">
+        var myInfo = {
+            width: "100%", height: "100%", color: "#f8fafc", use: "HTML5", j2sPath: "jsmol/j2s",
+            script: "set measurementUnits Angstroms; set antialiasDisplay on; set frank off; set dragAndDrop off; set pickingStyle MEASURE ON; set showMeasurements true; color measurements black; mo cutoff 0.03; mo nomesh; mo fill; mo opaque;" 
+        };
+
+        var viewerState = { homo: false, lumo: false, esp: false, mulliken: false, measure: 'off' };
+        var lastModelCount = 0;
+        var isVib = false;
+
+        window.onload = function() {
+            Jmol.setDocument(0);
+            var targetDiv = document.getElementById("jsmol_viewer");
+            if (targetDiv) {
+                targetDiv.innerHTML = Jmol.getAppletHtml("myJSmolApplet", myInfo);
+            }
+            var handleDrop = function(e) {
+                e.preventDefault(); e.stopPropagation();
+                var files = e.dataTransfer.files;
+                if (files && files.length > 0) processFile(files[0]);
+            };
+            var handleDragOver = function(e) {
+                e.preventDefault(); e.stopPropagation();
+                e.dataTransfer.dropEffect = 'copy';
+            };
+            window.addEventListener("dragover", handleDragOver, false);
+            window.addEventListener("drop", handleDrop, false);
+            setTimeout(function() {
+                var jsmolCanvas = document.querySelector("canvas");
+                if (jsmolCanvas) {
+                    jsmolCanvas.addEventListener("dragover", handleDragOver, true);
+                    jsmolCanvas.addEventListener("drop", handleDrop, true);
+                }
+            }, 1500);
+            setInterval(watchJSmol, 1000);
+        };
+
+        function handleFileSelect(event) {
+            var file = event.target.files[0];
+            if (file) processFile(file);
+        }
+
+        function processFile(file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var fileContent = e.target.result;
+                var loadScript = "load inline " + JSON.stringify(fileContent) + " 0; wireframe 0.15; spacefill 23%; zoom 0; color measurements black;";
+                Jmol.script(myJSmolApplet, loadScript);
+                document.getElementById("file_name_display").textContent = file.name;
+                clearAll(); 
+                lastModelCount = 0;
+            };
+            reader.readAsText(file);
+        }
+
+        function watchJSmol() {
+            var currentCount = parseInt(Jmol.evaluateVar(myJSmolApplet, "{*}.model.max"));
+            if (currentCount > 0 && currentCount !== lastModelCount) {
+                lastModelCount = currentCount;
+                updateVibrationList();
+            }
+        }
+
+        function updateVibrationList() {
+            var select = document.getElementById("vib-select");
+            if(!select) return;
+            select.innerHTML = '<option value="0">Select Frequency...</option>';
+            var models = Jmol.getPropertyAsArray(myJSmolApplet, "modelInfo.models");
+            if (!models) return;
+            for (var i = 0; i < models.length; i++) {
+                var name = models[i].name;
+                if (name && (name.indexOf("cm^-1") !== -1 || name.indexOf("cm-1") !== -1)) {
+                    var numPart = parseFloat(name);
+                    var formattedName = !isNaN(numPart) ? numPart.toFixed(2) + " cm^-1" : name.trim();
+                    var opt = document.createElement("option");
+                    opt.value = (i + 1); 
+                    opt.textContent = formattedName;
+                    select.appendChild(opt);
+                }
+            }
+        }
+
+        function onVibChange() {
+            var modelNum = document.getElementById("vib-select").value;
+            if (modelNum === "0") {
+                Jmol.script(myJSmolApplet, "vibration off;");
+                isVib = false;
+                updateUIState();
+                return;
+            }
+            Jmol.script(myJSmolApplet, "model " + modelNum + "; vibration scale 0.5; vibration on;");
+            isVib = true;
+            updateUIState();
+        }
+
+        function toggleVibration() {
+            if (isVib) {
+                Jmol.script(myJSmolApplet, "vibration off;");
+                isVib = false;
+            } else {
+                Jmol.script(myJSmolApplet, "vibration on;");
+                isVib = true;
+            }
+            updateUIState();
+        }
+
+        function toggleMO(type) {
+            if (viewerState[type]) {
+                Jmol.script(myJSmolApplet, "mo off;");
+                viewerState[type] = false;
+            } else {
+                viewerState.homo = false; viewerState.lumo = false;
+                Jmol.script(myJSmolApplet, "mo off; mo " + type + "; mo nomesh; mo fill; mo opaque;");
+                viewerState[type] = true;
+            }
+            updateUIState();
+        }
+
+        function toggleESP() {
+            if (viewerState.esp) {
+                Jmol.script(myJSmolApplet, "isosurface off;");
+                viewerState.esp = false;
+            } else {
+                Jmol.script(myJSmolApplet, "isosurface vdw map mep; isosurface translucent 0.5;");
+                viewerState.esp = true;
+            }
+            updateUIState();
+        }
+
+        function toggleMulliken() {
+            if (viewerState.mulliken) {
+                Jmol.script(myJSmolApplet, "labels off;");
+                viewerState.mulliken = false;
+            } else {
+                var script = "labels off; select *; model 1.1; color label [x000033]; font label 14 sanserif bold; set labelOffset 12 12; label %0.3P;";
+                Jmol.script(myJSmolApplet, script);
+                viewerState.mulliken = true;
+            }
+            updateUIState();
+        }
+
+        function setMeasure(type) {
+            var script = "set measurementUnits Angstroms; set pickingStyle MEASURE ON; color measurements black; ";
+            if (type === 'dist') script += "set picking distance;";
+            else if (type === 'angle') script += "set picking angle;";
+            else if (type === 'torsion') script += "set picking torsion;";
+            else if (type === 'off') script = "set picking select; set pickingStyle MEASURE OFF; measurements delete;";
+            Jmol.script(myJSmolApplet, script);
+            viewerState.measure = type;
+            updateUIState();
+        }
+
+        function clearAll() {
+            resetState();
+            Jmol.script(myJSmolApplet, "mo off; isosurface off; labels off; measurements delete; set picking select; set pickingStyle MEASURE OFF; vibration off;");
+            updateUIState();
+        }
+
+        function resetState() {
+            viewerState = { homo: false, lumo: false, esp: false, mulliken: false, measure: 'off' };
+            isVib = false;
+        }
+
+        function updateUIState() {
+            toggleBtnClass('btn-homo', viewerState.homo);
+            toggleBtnClass('btn-lumo', viewerState.lumo);
+            toggleBtnClass('btn-esp', viewerState.esp);
+            toggleBtnClass('btn-mulliken', viewerState.mulliken);
+            toggleBtnClass('btn-vib-toggle', isVib);
+            ['dist', 'angle', 'torsion'].forEach(function(m) {
+                toggleBtnClass('btn-' + m, viewerState.measure === m);
+            });
+        }
+
+        function toggleBtnClass(id, isActive) {
+            var btn = document.getElementById(id);
+            if(btn) {
+                if(isActive) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-body: #f3f4f6; --bg-panel: #ffffff; --primary: #3b82f6;
+            --primary-hover: #2563eb; --text-main: #1f2937; --text-sub: #6b7280;
+            --border: #e5e7eb;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        header { background: var(--bg-panel); padding: 0 20px; height: 60px; display: flex; align-items: center; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        h2 { margin: 0; font-size: 1.4rem; color: var(--text-main); font-weight: 800; letter-spacing: -0.02em; }
+        .logo-g { color: var(--primary); margin-right: 1px; }
+        .app-container { display: flex; flex: 1; overflow: hidden; }
+        .viewer-pane { flex: 1; background: #fff; }
+        #jsmol_viewer { width: 100%; height: 100%; }
+        .control-pane { width: 300px; background: var(--bg-panel); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px; overflow-y: auto; flex-shrink: 0; gap: 32px; }
+        .panel-section { display: flex; flex-direction: column; gap: 12px; }
+        .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-sub); font-weight: 700; border-bottom: 2px solid var(--border); padding-bottom: 6px; }
+        .file-input-wrapper { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+        input[type="file"] { display: none; }
+        .custom-file-upload { display: inline-block; padding: 10px 20px; background: var(--primary); color: white; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: background 0.2s; width: 100%; text-align: center; box-sizing: border-box; }
+        .custom-file-upload:hover { background: var(--primary-hover); }
+        #file_name_display { font-size: 0.8rem; color: var(--text-sub); word-break: break-all; padding: 0 4px; }
+        select { 
+            padding: 10px; border: 1px solid var(--border); background: white; color: var(--text-main); border-radius: 6px; font-size: 0.85rem; font-weight: 500; width: 100%; cursor: pointer; appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
+        }
+        select:hover { background-color: #f3f4f6; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 10px; border: 1px solid var(--border); background: white; color: var(--text-main); border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; width: 100%; }
+        button:hover { background: #f3f4f6; }
+        button.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-clear { background: #fef2f2; color: #ef4444; border-color: #fee2e2; font-weight: 600; margin-top: auto; }
+        .btn-clear:hover { background: #fee2e2; }
+    </style>
+</head>
+<body>
+    <header>
+        <h2><span class="logo-g">G</span>-Visualizer</h2>
+    </header>
+    <div class="app-container">
+        <div class="viewer-pane">
+            <div id="jsmol_viewer"></div>
+        </div>
+        <div class="control-pane">
+            <div class="panel-section">
+                <div class="section-title">Data Source</div>
+                <div class="file-input-wrapper">
+                    <label for="file-upload" class="custom-file-upload">Open Log File</label>
+                    <input id="file-upload" type="file" onchange="handleFileSelect(event)"/>
+                    <span id="file_name_display">No file loaded</span>
+                </div>
+            </div>
+            <div class="panel-section">
+                <div class="section-title">Electronic Structure</div>
+                <div class="btn-grid">
+                    <button id="btn-homo" onclick="toggleMO('homo')">HOMO</button>
+                    <button id="btn-lumo" onclick="toggleMO('lumo')">LUMO</button>
+                    <button id="btn-esp" onclick="toggleESP()">ESP Map</button>
+                    <button id="btn-mulliken" onclick="toggleMulliken()">Charges</button>
+                </div>
+            </div>
+            <div class="panel-section">
+                <div class="section-title">Geometry Tools</div>
+                <div class="btn-grid">
+                    <button id="btn-dist" onclick="setMeasure('dist')">Distance</button>
+                    <button id="btn-angle" onclick="setMeasure('angle')">Angle</button>
+                    <button id="btn-torsion" onclick="setMeasure('torsion')">Dihedral</button>
+                    <button onclick="setMeasure('off')">Clear Tools</button>
+                </div>
+            </div>
+            <div class="panel-section">
+                <div class="section-title">Vibrational Analysis</div>
+                <select id="vib-select" onchange="onVibChange()">
+                    <option value="0">Select Frequency...</option>
+                </select>
+                <button id="btn-vib-toggle" onclick="toggleVibration()">Vibration ON/OFF</button>
+            </div>
+            <button class="btn-clear" onclick="clearAll()">Reset Session</button>
+        </div>
+    </div>
+</body>
+</html>

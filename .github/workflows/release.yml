@@ -6,12 +6,7 @@ on:
 
 jobs:
   publish:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [windows-latest]
-
-    runs-on: ${{ matrix.platform }}
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -23,21 +18,15 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      # 直接ファイルを叩きに行く設定
-      - name: install frontend dependencies
-        run: |
-          if (Test-Path "package.json") { npm install }
-          elseif (Test-Path "G-Visualizer/package.json") { cd G-Visualizer; npm install }
-          else { Write-Error "package.json not found anywhere!" }
+      - name: install dependencies
+        run: npm install
 
       - name: build tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # ここを空にすることで、Action側にパスを推測させない
           tagName: v__VERSION__
           releaseName: "G-Visualizer v__VERSION__"
-          releaseBody: "Automated release from GitHub Actions"
           releaseDraft: true
           prerelease: false

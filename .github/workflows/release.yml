@@ -23,19 +23,19 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      # 直接ファイルを叩きに行く設定
       - name: install frontend dependencies
-        # ここで「今いる場所」を確認しつつインストール
         run: |
-          ls -R
-          npm install
+          if (Test-Path "package.json") { npm install }
+          elseif (Test-Path "G-Visualizer/package.json") { cd G-Visualizer; npm install }
+          else { Write-Error "package.json not found anywhere!" }
 
       - name: build tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # ここを "." にすることで「今いる場所がプロジェクトのルートだ」と教え込みます
-          projectPath: "."
+          # ここを空にすることで、Action側にパスを推測させない
           tagName: v__VERSION__
           releaseName: "G-Visualizer v__VERSION__"
           releaseBody: "Automated release from GitHub Actions"

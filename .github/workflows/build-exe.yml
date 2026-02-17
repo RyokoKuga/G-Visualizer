@@ -19,11 +19,18 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Prepare web assets
+        # HTMLとjsmol, Imageフォルダを dist フォルダに隔離する
+        run: |
+          mkdir dist
+          cp main.html dist/index.html
+          cp -r jsmol dist/
+          cp -r Image dist/
+
       - name: Build App
-        # ↓ここを "npm run package" ではなく、以下の2行に確実に書き換えてください
         run: |
           npm install
-          npx tauri build
+          npx tauri build --ci
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -31,5 +38,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: G-Visualizer-EXE
-          # Tauriのビルド済みファイルが生成される場所を指定
           path: src-tauri/target/release/bundle/msi/*.msi

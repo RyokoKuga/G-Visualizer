@@ -1,0 +1,35 @@
+{
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "devPath": "../",
+    "distDir": "../"
+  },
+  "package": {
+    "productName": "G-Visualizer",
+    "version": "1.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": true
+    },
+    "bundle": {
+      "active": true,
+      "identifier": "com.ryokokuga.gvisualizer",
+      "targets": "msi",
+      "icon": []
+    },
+    "security": {
+      "csp": null
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "height": 800,
+        "resizable": true,
+        "title": "G-Visualizer",
+        "width": 1200
+      }
+    ]
+  }
+}

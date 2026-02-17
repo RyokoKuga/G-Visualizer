@@ -1,12 +1,12 @@
 {
   "name": "g-visualizer",
   "version": "1.0.0",
-  "main": "main.js",
+  "description": "G-Visualizer for GAMESS",
+  "license": "MIT",
   "scripts": {
-    "package": "electron-builder build --win --x64"
+    "tauri": "tauri"
   },
   "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^24.13.3"
+    "@tauri-apps/cli": "^1.5.11"
   }
 }

@@ -18,8 +18,18 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      # 【最強の修正】二重ディレクトリ構造を強制的に解消する
+      - name: Fix directory structure
+        shell: bash
+        run: |
+          if [ -d "G-Visualizer" ] && [ -f "G-Visualizer/package.json" ]; then
+            echo "Detected double directory! Moving files to root..."
+            mv G-Visualizer/* . 2>/dev/null || true
+            mv G-Visualizer/.* . 2>/dev/null || true
+          fi
+          ls -F # デバッグ用：現在のファイル一覧を表示
+
       - name: install dependencies
-        # 余計なパス指定をせず、カレントディレクトリで実行
         run: npm install
 
       - name: build tauri app
@@ -27,6 +37,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          projectPath: "."
           tagName: v__VERSION__
           releaseName: "G-Visualizer v__VERSION__"
           releaseDraft: true

@@ -1,0 +1,12 @@
+{
+  "name": "g-visualizer",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "package": "electron-builder build --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}

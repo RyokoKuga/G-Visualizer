@@ -13,8 +13,7 @@
     "bundle": {
       "active": true,
       "identifier": "com.ryokokuga.gvisualizer",
-      "targets": "msi",
-      "icon": []
+      "targets": "msi"
     },
     "windows": [
       {

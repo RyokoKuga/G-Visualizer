@@ -20,9 +20,10 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build App
+        # ↓ここを "npm run package" ではなく、以下の2行に確実に書き換えてください
         run: |
           npm install
-          npm run package
+          npx tauri build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -30,4 +31,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: G-Visualizer-EXE
+          # Tauriのビルド済みファイルが生成される場所を指定
           path: src-tauri/target/release/bundle/msi/*.msi

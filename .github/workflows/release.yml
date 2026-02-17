@@ -24,14 +24,17 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: install frontend dependencies
-        # ここで確実にルートディレクトリのnpm installを叩く
-        run: npm install
+        # ここで「今いる場所」を確認しつつインストール
+        run: |
+          ls -R
+          npm install
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: build tauri app
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # projectPathを空にするか「.」にすることで、ルートを探しに行かせます
+          # ここを "." にすることで「今いる場所がプロジェクトのルートだ」と教え込みます
           projectPath: "."
           tagName: v__VERSION__
           releaseName: "G-Visualizer v__VERSION__"

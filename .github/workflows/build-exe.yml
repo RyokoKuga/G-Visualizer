@@ -19,13 +19,23 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Prepare web assets
-        # HTMLとjsmol, Imageフォルダを dist フォルダに隔離する
+      - name: Prepare web assets and dummy icons
         run: |
-          mkdir dist
-          cp main.html dist/index.html
-          cp -r jsmol dist/
-          cp -r Image dist/
+          # Web資産の準備
+          New-Item -Path "dist" -ItemType Directory -Force
+          Copy-Item "main.html" -Destination "dist\index.html"
+          if (Test-Path "jsmol") { Copy-Item -Path "jsmol" -Destination "dist\" -Recurse -Force }
+          if (Test-Path "Image") { Copy-Item -Path "Image" -Destination "dist\" -Recurse -Force }
+          
+          # アイコンエラー回避のためのダミーファイル作成
+          New-Item -Path "src-tauri\icons" -ItemType Directory -Force
+          $echo = "dummy"
+          Set-Content -Path "src-tauri\icons\icon.ico" -Value $echo
+          Set-Content -Path "src-tauri\icons\icon.png" -Value $echo
+          Set-Content -Path "src-tauri\icons\32x32.png" -Value $echo
+          Set-Content -Path "src-tauri\icons\128x128.png" -Value $echo
+          Set-Content -Path "src-tauri\icons\128x128@2x.png" -Value $echo
+          Set-Content -Path "src-tauri\icons\icon.icns" -Value $echo
 
       - name: Build App
         run: |

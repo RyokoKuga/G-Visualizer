@@ -8,7 +8,11 @@ jobs:
   publish:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # ここが重要：サブフォルダを作らず、現在の場所に直接展開させる
+          path: "."
 
       - name: setup node
         uses: actions/setup-node@v4
@@ -18,25 +22,17 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      # 【最強の修正】二重ディレクトリ構造を強制的に解消する
-      - name: Fix directory structure
-        shell: bash
-        run: |
-          if [ -d "G-Visualizer" ] && [ -f "G-Visualizer/package.json" ]; then
-            echo "Detected double directory! Moving files to root..."
-            mv G-Visualizer/* . 2>/dev/null || true
-            mv G-Visualizer/.* . 2>/dev/null || true
-          fi
-          ls -F # デバッグ用：現在のファイル一覧を表示
-
       - name: install dependencies
-        run: npm install
+        # 明示的にカレントディレクトリのpackage.jsonを叩く
+        run: |
+          npm install
 
       - name: build tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          # プロジェクトのルートを指定
           projectPath: "."
           tagName: v__VERSION__
           releaseName: "G-Visualizer v__VERSION__"

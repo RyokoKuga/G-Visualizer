@@ -10,9 +10,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          # ここが重要：サブフォルダを作らず、現在の場所に直接展開させる
-          path: "."
 
       - name: setup node
         uses: actions/setup-node@v4
@@ -23,16 +20,25 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: install dependencies
-        # 明示的にカレントディレクトリのpackage.jsonを叩く
+        shell: pwsh
         run: |
-          npm install
+          # どこに package.json があるか探し、そのディレクトリへ移動して実行
+          $targetDir = Get-ChildItem -Filter "package.json" -Recurse | Select-Object -First 1 -ExpandProperty DirectoryName
+          if ($targetDir) {
+            Write-Host "Found package.json in: $targetDir"
+            cd $targetDir
+            npm install
+          } else {
+            Write-Error "package.json was not found anywhere in the repository!"
+            exit 1
+          }
 
       - name: build tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # プロジェクトのルートを指定
+          # 公式Actionにパスを探させず、ルートから探索させる
           projectPath: "."
           tagName: v__VERSION__
           releaseName: "G-Visualizer v__VERSION__"

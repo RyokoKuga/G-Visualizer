@@ -1,4 +1,4 @@
-name: Build Tauri EXE
+name: Build Tauri EXE2
 
 on:
   push:

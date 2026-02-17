@@ -1,34 +1,33 @@
-name: Continuous Build EXE
-
+name: Build-EXE
 on:
   push:
-    branches:
-      - main  # mainブランチに更新があったら実行
-  workflow_dispatch: # 手動でも実行ボタンを押せるようにする
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # cache: 'npm'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Build EXE
-        run: npm run package
+      - name: Build App
+        run: |
+          npm install
+          npx tauri build
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: G-Visualizer-EXE
-          path: dist/*.exe  # ビルドされたexeを「Artifacts」に保存
+          path: src-tauri/target/release/bundle/msi/*.msi

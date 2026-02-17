@@ -1,21 +1,23 @@
-name: Build EXE and Release
+name: Continuous Build EXE
 
 on:
   push:
-    tags:
-      - 'v*' # v1.0 などのタグがついた時のみ実行
+    branches:
+      - main  # mainブランチに更新があったら実行
+  workflow_dispatch: # 手動でも実行ボタンを押せるようにする
 
 jobs:
-  release:
+  build:
     runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/checkout@v4
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
@@ -25,9 +27,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: dist/*.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: G-Visualizer-EXE
+          path: dist/*.exe  # ビルドされたexeを「Artifacts」に保存

@@ -22,7 +22,7 @@ jobs:
       - name: Build App
         run: |
           npm install
-          npx tauri build
+          npm run package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

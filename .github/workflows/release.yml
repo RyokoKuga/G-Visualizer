@@ -18,14 +18,19 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      # 修正ポイント: 明示的に「カレントディレクトリ」を指定して実行
       - name: install dependencies
-        run: npm install
+        run: |
+          cd $GITHUB_WORKSPACE
+          npm install
 
       - name: build tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          # ここを "." にすることで「二重フォルダの奥」を見に行くのを防ぐ
+          projectPath: "."
           tagName: v__VERSION__
           releaseName: "G-Visualizer v__VERSION__"
           releaseDraft: true

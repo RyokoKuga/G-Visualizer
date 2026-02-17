@@ -6,12 +6,7 @@ on:
 
 jobs:
   publish:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [windows-latest]
-
-    runs-on: ${{ matrix.platform }}
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -24,24 +19,14 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: install dependencies
-        shell: bash
-        run: |
-          # package.jsonがルートにあればそのまま、二重ディレクトリなら移動してインストール
-          if [ -f "package.json" ]; then
-            npm install
-          elif [ -f "G-Visualizer/package.json" ]; then
-            cd G-Visualizer && npm install
-          else
-            echo "package.json not found" && exit 1
-          fi
+        # 余計なパス指定をせず、カレントディレクトリで実行
+        run: npm install
 
       - name: build tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # "." を指定することで、現在のディレクトリ（ルート）を基準にビルドを開始します
-          projectPath: "."
           tagName: v__VERSION__
           releaseName: "G-Visualizer v__VERSION__"
           releaseDraft: true

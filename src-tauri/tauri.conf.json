@@ -1,0 +1,22 @@
+{
+  "build": {
+    "distDir": "../dist",
+    "devPath": "../dist"
+  },
+  "tauri": {
+    "windows": [
+      {
+        "title": "G-Visualizer",
+        "width": 1200,
+        "height": 800
+      }
+    ],
+    "bundle": {
+      "active": true,
+      "targets": ["nsis", "exe"]
+    },
+    "security": {
+      "csp": null
+    }
+  }
+}

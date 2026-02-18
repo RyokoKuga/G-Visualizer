@@ -1,0 +1,24 @@
+{
+  "name": "g-visualizer",
+  "version": "1.0.0",
+  "description": "[JSmol](https://jmol.sourceforge.net/)-based molecular visualization tool for GAMESS (US) output files.",
+  "main": "index.js",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RyokoKuga/G-Visualizer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/RyokoKuga/G-Visualizer/issues"
+  },
+  "homepage": "https://github.com/RyokoKuga/G-Visualizer#readme",
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.10.0"
+  }
+}

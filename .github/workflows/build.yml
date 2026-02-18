@@ -1,4 +1,4 @@
-name: Build Universal macOS App
+name: Build Universal macOS
 
 on:
   workflow_dispatch:

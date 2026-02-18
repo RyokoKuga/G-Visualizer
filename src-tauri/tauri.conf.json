@@ -16,6 +16,7 @@
         "height": 600,
         "resizable": true,
         "fullscreen": false
+        "url": "main.html"
       }
     ],
     "security": {

@@ -6,8 +6,7 @@
   "build": {
     "beforeDevCommand": "",
     "beforeBuildCommand": "",
-    "devPath": "../public",
-    "distDir": "../public"
+    "frontendDist": "../public"
   },
   "app": {
     "windows": [
